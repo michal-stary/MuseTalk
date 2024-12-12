@@ -1,0 +1,7 @@
+unet_config: models/musetalk/musetalk_mid3D.json
+tasks:
+  task_0:
+    video_path: "data/video/retargeting23fps.mp4"
+    audio_path: "data/audio/challenge_en.wav"
+  
+

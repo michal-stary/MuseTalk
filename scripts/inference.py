@@ -8,32 +8,35 @@ import glob
 import pickle
 from tqdm import tqdm
 import copy
-
+import musetalk.utils.hack_registry
 from musetalk.utils.utils import get_file_type,get_video_fps,datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_placeholder
 from musetalk.utils.blending import get_image
 from musetalk.utils.utils import load_all_model
 import shutil
 
-# load model weights
-audio_processor, vae, unet, pe = load_all_model()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-timesteps = torch.tensor([0], device=device)
+
 
 @torch.no_grad()
 def main(args):
-    global pe
+    inference_config = OmegaConf.load(args.inference_config)
+    print(inference_config)
+
+    global pe, vae, unet, audio_processor
+    # load model weights
+    audio_processor, vae, unet, pe = load_all_model(inference_config.unet_config)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    timesteps = torch.tensor([0], device=device)
     if args.use_float16 is True:
         pe = pe.half()
         vae.vae = vae.vae.half()
         unet.model = unet.model.half()
     
-    inference_config = OmegaConf.load(args.inference_config)
-    print(inference_config)
-    for task_id in inference_config:
-        video_path = inference_config[task_id]["video_path"]
-        audio_path = inference_config[task_id]["audio_path"]
-        bbox_shift = inference_config[task_id].get("bbox_shift", args.bbox_shift)
+    task_config = inference_config.tasks
+    for task_id in task_config:
+        video_path = task_config[task_id]["video_path"]
+        audio_path = task_config[task_id]["audio_path"]
+        bbox_shift = task_config[task_id].get("bbox_shift", args.bbox_shift)
 
         input_basename = os.path.basename(video_path).split('.')[0]
         audio_basename  = os.path.basename(audio_path).split('.')[0]
