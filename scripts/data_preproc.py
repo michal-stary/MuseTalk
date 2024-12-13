@@ -105,7 +105,7 @@ def save_processed_data(frames, coords, audio_chunks, output_dir,
             
     # Save audio chunks
     for chunk in audio_chunks:
-        np.save(f"data/audios/{output_dir}{audio_idx}.npy", chunk)
+        np.save(f"data/audios/{output_dir}/{audio_idx}.npy", chunk)
         audio_idx += 1
     
     return img_idx, audio_idx
