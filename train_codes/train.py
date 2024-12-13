@@ -22,13 +22,16 @@ from diffusers import (
     DDPMScheduler,
     StableDiffusionInpaintPipeline,
     StableDiffusionPipeline,
-    UNet2DConditionModel,
 )
+
+
+
 from diffusers.optimization import get_scheduler
 from diffusers.utils import check_min_version
 
 import sys
 sys.path.append("./")
+sys.path.append("../")
 
 from DataLoader import Dataset
 from utils.utils import preprocess_img_tensor
@@ -37,6 +40,7 @@ from utils.model_utils import validation,PositionalEncoding
 import time
 import pandas as pd
 from PIL import Image
+from musetalk.models.unet_2d_condition_temporal import UNet2DConditionModel
 
 
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
@@ -235,6 +239,20 @@ def parse_args():
         help="Determine whisper feature type",
     )
 
+    parser.add_argument(
+        "--initial_unet_checkpoint",
+        type=str,
+        default=None,
+        help="The initial checkpoint of unet model",
+    )
+
+    parser.add_argument(
+        "--freeze_spatial_unet",
+        action="store_true",
+        help="Whether to freeze the spatial unet",
+    )
+
+
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
     if env_local_rank != -1 and env_local_rank != args.local_rank:
@@ -309,6 +327,16 @@ def main():
     vae_fp32 = AutoencoderKL.from_pretrained(args.pretrained_model_name_or_path, subfolder="vae")
     print("Loading UNet2DConditionModel")
     unet = UNet2DConditionModel(**unet_config)
+
+    # load pretrained unet
+    if args.initial_unet_checkpoint is not None:
+        unet.load_state_dict(torch.load(args.initial_unet_checkpoint), strict=False)
+
+    if args.freeze_spatial_unet:
+        # make all layers that dont have "temp" in their name not require gradients
+        for name, param in unet.named_parameters():
+            if "temp" not in name:
+                param.requires_grad = False
     
     if args.whisper_model_type == "tiny":
         pe = PositionalEncoding(d_model=384)
@@ -357,6 +385,7 @@ def main():
                             use_audio_length_right=args.use_audio_length_right,
                             whisper_model_type=args.whisper_model_type
                             )
+    print("train_dataset: ", len(train_dataset))
     train_data_loader = data_utils.DataLoader(
         train_dataset, batch_size=args.train_batch_size, shuffle=True,
         num_workers=8)
@@ -477,6 +506,14 @@ def main():
     for epoch in range(first_epoch, args.num_train_epochs):
         unet.train()
         for step, (ref_image, image, masked_image, masks, audio_feature) in enumerate(train_data_loader):
+            print("=============epoch:{0}=step:{1}=====".format(epoch,step))
+            print("ref_image: ",ref_image.shape)
+            print("masks: ", masks.shape)
+            print("masked_image: ", masked_image.shape)
+            print("audio feature: ", audio_feature.shape)
+            print("image: ", image.shape)
+
+
             # Skip steps until we reach the resumed step
             if args.resume_from_checkpoint and epoch == first_epoch and step < resume_step:
                 if step % args.gradient_accumulation_steps == 0:

@@ -9,11 +9,15 @@ import pickle
 from tqdm import tqdm
 import copy
 
+from musetalk.utils import hack_registry
 from musetalk.utils.utils import get_file_type,get_video_fps,datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_placeholder
 from musetalk.utils.blending import get_image
 from musetalk.utils.utils import load_all_model
 import shutil
+from safetensors.torch import load_file
+
+
 
 from accelerate import Accelerator
 
@@ -22,10 +26,9 @@ audio_processor, vae, unet, pe = load_all_model()
 accelerator = Accelerator(
         mixed_precision="fp16",
     )
-unet = accelerator.prepare(
-        unet,
-
-    )
+# unet = accelerator.prepare(
+#         unet,
+#     )
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 timesteps = torch.tensor([0], device=device)
 
@@ -34,7 +37,9 @@ def main(args):
     global pe
     if not (args.unet_checkpoint == None):
         print("unet ckpt loaded")
-        accelerator.load_state(args.unet_checkpoint)
+        # accelerator.load_state(args.unet_checkpoint)
+        state_dict = load_file(args.unet_checkpoint)
+        unet.model.load_state_dict(state_dict)
 
     if args.use_float16 is True:
         pe = pe.half()

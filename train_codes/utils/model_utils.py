@@ -11,11 +11,12 @@ from PIL import Image
 from typing import Any, Dict, List, Optional, Tuple, Union
 from diffusers import (
     AutoencoderKL,
-    UNet2DConditionModel,
 )
 from torch import Tensor, nn
 import logging
 import json
+
+from musetalk.models.unet_2d_condition_temporal import UNet2DConditionModel
 
 RESIZED_IMG = 256
 

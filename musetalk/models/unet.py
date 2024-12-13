@@ -3,7 +3,9 @@ import torch.nn as nn
 import math
 import json
 
-from diffusers import UNet2DConditionModel
+from musetalk.models.unet_2d_condition_temporal import UNet2DConditionModel
+# from diffusers import UNetSpatioTemporalConditionModel as UNet2DConditionModel
+
 import sys
 import time
 import numpy as np
@@ -38,7 +40,7 @@ class UNet():
         self.pe = PositionalEncoding(d_model=384)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         weights = torch.load(model_path) if torch.cuda.is_available() else torch.load(model_path, map_location=self.device)
-        self.model.load_state_dict(weights)
+        self.model.load_state_dict(weights, strict=False)
         if use_float16:
             self.model = self.model.half()
         self.model.to(self.device)
