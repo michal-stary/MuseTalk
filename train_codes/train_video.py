@@ -254,6 +254,13 @@ def parse_args():
     )
 
 
+    parser.add_argument(
+        "--sequence_length",
+        type=int,
+        default=16,
+        help="The length of the sequence",
+    )
+
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
     if env_local_rank != -1 and env_local_rank != args.local_rank:
@@ -382,7 +389,7 @@ def main():
     print("loading train_dataset ...")
     train_dataset = VideoDataset(args.data_root, 
                             args.train_json, 
-                            sequence_length=32,
+                            sequence_length=args.sequence_length,
                             use_audio_length_left=args.use_audio_length_left,
                             use_audio_length_right=args.use_audio_length_right,
                             whisper_model_type=args.whisper_model_type
@@ -394,7 +401,7 @@ def main():
     print("loading val_dataset ...")
     val_dataset = VideoDataset(args.data_root, 
                           args.val_json,
-                          sequence_length=32,
+                          sequence_length=args.sequence_length,
                           use_audio_length_left=args.use_audio_length_left,
                           use_audio_length_right=args.use_audio_length_right,
                           whisper_model_type=args.whisper_model_type
@@ -509,13 +516,6 @@ def main():
     for epoch in range(first_epoch, args.num_train_epochs):
         unet.train()
         for step, (ref_images, images, masked_images, masks, audio_features) in enumerate(train_data_loader):
-            print("=============epoch:{0}=step:{1}=====".format(epoch,step))
-            print("ref_images: ", ref_images.shape)
-            print("masks: ", masks.shape)
-            print("masked_images: ", masked_images.shape)
-            print("audio features: ", audio_features.shape)
-            print("images: ", images.shape)
-
             # Skip steps until we reach the resumed step
             if args.resume_from_checkpoint and epoch == first_epoch and step < resume_step:
                 if step % args.gradient_accumulation_steps == 0:
@@ -559,7 +559,7 @@ def main():
                 start = time.time()
 
                 # Process sequence of masks
-                mask = torch.nn.functional.interpolate(masks, scale_factor=0.125).unsqueeze(1)  
+                mask = torch.nn.functional.interpolate(masks.unsqueeze(1), scale_factor=0.125)  
                 # Use same timestep for all frames in sequence
                 timesteps = torch.tensor([0], device=latents.device)
 
@@ -655,7 +655,9 @@ def main():
                             global_step=global_step,
                             val_data_loader=val_data_loader,
                             output_dir = args.val_out_dir,
-                            whisper_model_type = args.whisper_model_type
+                            whisper_model_type = args.whisper_model_type,
+                            validation_steps = 50,
+
                         )
                         logger.info(f"Saved samples to images/val")
                     start = time.time()                    

@@ -24,7 +24,7 @@ class VideoDataset(data_utils.Dataset):
     def __init__(self, 
                  data_root: str,
                  json_path: str,
-                 sequence_length: int = 32,  # Length of frame sequences to return
+                 sequence_length: int = 16,  # Length of frame sequences to return
                  use_audio_length_left: int = 1,
                  use_audio_length_right: int = 1,
                  whisper_model_type: str = "tiny"):
@@ -146,21 +146,18 @@ class VideoDataset(data_utils.Dataset):
         if not os.path.isdir(audio_dir):
             raise ValueError(f"Audio directory not found: {sub_folder_name}")
             
+        # The features are already aggregated in the preprocessing step
+        # TODO: move aggregation to this step only
         # Load features for the temporal window
-        features = []
-        start_idx = frame_idx - self.audio_context[0]
-        end_idx = frame_idx + self.audio_context[1] + 1
-        
-        for feat_idx in range(start_idx, end_idx):
-            feat_path = os.path.join(audio_dir, f"{feat_idx}.npy")
-            if not os.path.exists(feat_path):
-                raise ValueError(f"Missing audio feature: {feat_path}")
-                
-            try:
-                features.append(np.load(feat_path))
-            except Exception as e:
-                raise ValueError(f"Error loading audio feature {feat_path}: {str(e)}")
-                
+        features = []        
+        feat_path = os.path.join(audio_dir, f"{frame_idx}.npy")
+        if not os.path.exists(feat_path):
+            raise ValueError(f"Missing audio feature: {feat_path}")        
+        try:
+            features.append(np.load(feat_path))
+        except Exception as e:
+            raise ValueError(f"Error loading audio feature: {feat_path}: {e}")
+            
         # Concatenate and reshape
         audio_feature = np.concatenate(features, axis=0)
         audio_feature = audio_feature.reshape(1, -1, self.whisper_dims[1])
@@ -285,7 +282,10 @@ class VideoDataset(data_utils.Dataset):
             masked_images.append(masked_image)
             masks.append(mask)
             audio_features.append(audio_feature)
-        
+        if not ref_images or not images or not masked_images or not masks or not audio_features:
+            print("Hacky fix for empty lists")
+            return self.__getitem__(idx - 1)
+
         # Stack all arrays in the sequence using numpy
         ref_images = np.stack(ref_images)
         images = np.stack(images)

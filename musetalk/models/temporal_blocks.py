@@ -89,7 +89,7 @@ class UNetMidBlock3DCrossAttn(nn.Module):
                     cross_attention_dim=cross_attention_dim,
                     norm_num_groups=resnet_groups,
                     positional_embeddings="sinusoidal",
-                    num_positional_embeddings=32
+                    num_positional_embeddings=16
                 )
             )
             resnets.append(

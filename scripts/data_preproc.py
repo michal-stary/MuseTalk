@@ -62,12 +62,14 @@ def process_video_frames(video_path, bbox_shift, use_saved_coord=False, result_d
     processed_frames = []
     for bbox, frame in zip(coords, frames):
         if bbox == coord_placeholder:
+            processed_frames.append(None)
             continue
             
         x1, y1, x2, y2 = bbox
         x1, y1, x2, y2 = max(0, x1), max(0, y1), max(0, x2), max(0, y2)
         
         if (y2-y1) <= 0 or (x2-x1) <= 0:
+            processed_frames.append(None)
             continue
             
         crop_frame = frame[y1:y2, x1:x2]
@@ -81,7 +83,7 @@ def process_video_frames(video_path, bbox_shift, use_saved_coord=False, result_d
     return processed_frames, coords, fps
 
 def save_processed_data(frames, coords, audio_chunks, output_dir, 
-                       start_img_idx, start_audio_idx, audio_processor=None):
+                       start_idx, audio_processor=None):
     """Save processed frames and audio features."""
     os.makedirs(os.path.join("data/images", output_dir, ), exist_ok=True)
     os.makedirs(os.path.join("data/audios", output_dir, ), exist_ok=True)
@@ -92,23 +94,16 @@ def save_processed_data(frames, coords, audio_chunks, output_dir,
         print(f"Frame shape: {frames[0].shape}")
         print(f"Audio chunks shape: {audio_chunks[0].shape}")
 
-    img_idx = start_img_idx
-    audio_idx = start_audio_idx
+    idx = start_idx
     
     # Save frames
-    for frame in frames:
+    for frame, audio_chunk in zip(frames, audio_chunks):
         if frame is not None:
-            cv2.imwrite(f"data/images/{output_dir}/{img_idx}.png", frame)
-            img_idx += 1
-        else:
-            print("Warning: Some frames are None, audio may not be aligned")
-            
-    # Save audio chunks
-    for chunk in audio_chunks:
-        np.save(f"data/audios/{output_dir}/{audio_idx}.npy", chunk)
-        audio_idx += 1
+            cv2.imwrite(f"data/images/{output_dir}/{idx}.png", frame)
+        np.save(f"data/audios/{output_dir}/{idx}.npy", audio_chunk)
+        idx += 1
     
-    return img_idx, audio_idx
+    return idx
 
 @torch.no_grad()
 def main(args):
@@ -120,8 +115,7 @@ def main(args):
     os.makedirs("data/images/" + output_dir, exist_ok=True)
     os.makedirs("data/audios/" + output_dir, exist_ok=True)
     # Get starting indices
-    start_img_idx = get_next_index(f"data/images/{output_dir}")
-    start_audio_idx = get_next_index(f"data/audios/{output_dir}")
+    start_idx = get_next_index(f"data/images/{output_dir}")
     
     # Process each task in config
     config = OmegaConf.load(args.inference_config)
@@ -129,7 +123,7 @@ def main(args):
         task = config[task_id]
         
         # Process video frames
-        frames, coords, fps = process_video_frames(
+        processed_frames, coords, fps = process_video_frames(
             task["video_path"],
             task.get("bbox_shift", args.bbox_shift),
             use_saved_coord=args.use_saved_coord,
@@ -141,15 +135,15 @@ def main(args):
         
         print("audio feat", audio_features.shape)
         print(f"Video FPS: {fps}")
-        print(len(frames), len(audio_features))
+        print(len(processed_frames), len(audio_features))
 
         # align the fps of audio and video
         audio_chunks = audio_processor.feature2chunks(audio_features, fps, audio_feat_length=[2,2])
         
         # Save processed data
-        start_img_idx, start_audio_idx = save_processed_data(
-            frames, coords, audio_chunks,
-            output_dir, start_img_idx, start_audio_idx, audio_processor=audio_processor
+        start_idx = save_processed_data(
+            processed_frames, coords, audio_chunks,
+            output_dir, start_idx, audio_processor=audio_processor
         )
 
 if __name__ == "__main__":

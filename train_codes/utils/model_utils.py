@@ -51,7 +51,8 @@ def validation(vae: torch.nn.Module,
       val_data_loader,
       output_dir,
       whisper_model_type,
-      UNet2DConditionModel=UNet2DConditionModel
+      UNet2DConditionModel=UNet2DConditionModel, 
+      validation_steps: Optional[int] = None,
      ):
     
      # Get the validation pipeline
@@ -77,10 +78,10 @@ def validation(vae: torch.nn.Module,
         for step, (ref_image, image, masked_image, masks, audio_feature) in enumerate(val_data_loader):
 
 
-            masks = masks.unsqueeze(1).unsqueeze(1).to(vae.device)
-            ref_image = preprocess_img_tensor(ref_image).to(vae.device)
-            image = preprocess_img_tensor(image).to(vae.device)
-            masked_image = preprocess_img_tensor(masked_image).to(vae.device)
+            masks = masks.squeeze(0).to(vae.device)
+            ref_image = preprocess_img_tensor(ref_image.squeeze(0)).to(vae.device)
+            image = preprocess_img_tensor(image.squeeze(0)).to(vae.device)
+            masked_image = preprocess_img_tensor(masked_image.squeeze(0)).to(vae.device)
 
              # Convert images to latent space 
             latents = vae.encode(image.to(dtype=weight_dtype)).latent_dist.sample() # init image
@@ -96,15 +97,13 @@ def validation(vae: torch.nn.Module,
             ).latent_dist.sample()
             ref_latents = ref_latents * vae.config.scaling_factor
 
-            mask = torch.stack(
-                [
-                    torch.nn.functional.interpolate(mask, size=(mask.shape[-1] // 8, mask.shape[-1] // 8))
-                    for mask in masks
-                ]
-            )
-            mask = mask.reshape(-1, 1, mask.shape[-1], mask.shape[-1])
+            mask = torch.nn.functional.interpolate(masks.unsqueeze(1), scale_factor=0.125)
             bsz = latents.shape[0]
             timesteps = torch.tensor([0], device=latents.device)
+            
+            # Process audio features for the sequence
+            audio_feature = audio_feature.squeeze(0).to(dtype=weight_dtype)  # Remove batch dim
+            audio_feature = pe(audio_feature)
 
             if unet_config['in_channels'] == 9:
                 latent_model_input = torch.cat([mask, masked_latents, ref_latents], dim=1)
@@ -118,13 +117,18 @@ def validation(vae: torch.nn.Module,
             image.paste(decode_latents(vae_fp32, ref_latents), (RESIZED_IMG, 0))
             image.paste(decode_latents(vae_fp32, latents), (RESIZED_IMG*2, 0))
             image.paste(decode_latents(vae_fp32, image_pred), (RESIZED_IMG*3, 0))
-
+            
             val_img_dir = f"images/{output_dir}/{global_step}"
             if not os.path.exists(val_img_dir):
                 os.makedirs(val_img_dir)
             image.save('{0}/val_epoch_{1}_{2}_image.png'.format(val_img_dir, global_step,step))
 
-            print("valtion in step:{0}, time:{1}".format(step,time.time()-start))
+            # print step and loss
+            if step % 100 == 0:
+                print("Validation step:{0}".format(step))
+                            
 
-        print("valtion_done in epoch:{0}, time:{1}".format(epoch,time.time()-start))
+            if validation_steps is not None and step >= validation_steps:
+                break
+        print("validation_done in epoch:{0}, time:{1}".format(epoch,time.time()-start))
     

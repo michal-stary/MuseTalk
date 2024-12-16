@@ -1,3 +1,37 @@
+# TemporalMuseTalk
+
+This repo is a enhanced version of MuseTalk that enhances the original per-frame architecture with temporal connections. 
+
+It is build upon not-so-nice MuseTalk code so the inference code is in main branch and the training code in in "train_codes" branch. 
+
+## Setup
+
+Follow the steps for setting up the MuseTalk and downloading the models as instructed there. 
+
+## Inference
+
+For temporal inference, use ...
+
+## Finetuning
+
+1. Download the target videos 
+
+cd MuseTalk/data_download
+python download.py
+
+2. For temporal finetuning, use the rewritten data preprocessing code in the train_codes branch as follows:
+
+cd MuseTalk
+''./data_new.sh train output $(ls -d data/video/downloaded_videos/*)''
+
+3. Run training script:
+cd MuseTalk/train_codes
+sh train.sh
+
+
+
+
+
 # MuseTalk
 
 MuseTalk: Real-Time High Quality Lip Synchronization with Latent Space Inpainting
