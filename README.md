@@ -33,6 +33,8 @@ python download.py
 ```bash
 cd REPOSITORY_ROOT
 ./preprocessing/preprocess_data.sh train output $(ls -d data/video/downloaded_videos/*)
+./preprocessing/preprocess_data.sh test output val_video1 val_video2
+
 ```
 
 3. Start training:
