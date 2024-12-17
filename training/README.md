@@ -6,8 +6,9 @@ The test yaml file should contain the validation video paths and corresponding a
 
 Run:
 ```
-./data_new.sh train output train_video1.mp4 train_video2.mp4
-./data_new.sh test output test_video1.mp4 test_video2.mp4
+cd REPOSITORY_ROOT
+./preprocessing/preprocess_data.sh train output $(ls -d data/video/downloaded_videos/*)
+./preprocessing/preprocess_data.sh test output val_video1 val_video2
 ```
 This creates folders which contain the image frames and npy files. This also creates train.json and val.json which can be used during the training.
 
@@ -37,16 +38,6 @@ This creates folders which contain the image frames and npy files. This also cre
 ## Training
 Simply run after preparing the preprocessed data
 ```
-cd train_codes
-sh train.sh #--train_json="../train.json" \(Generated in Data preprocessing step.)
-            #--val_json="../val.json" \
+cd REPOSITORY_ROOT/training
+sh train.sh
 ```
-## Inference with trained checkpoit
-Simply run after training the model, the model checkpoints are saved at train_codes/output usually
-```
-python -m scripts.finetuned_inference --inference_config configs/inference/test.yaml --unet_checkpoint path_to_trained_checkpoint_folder
-```
-
-## TODO
-- [x] release data preprocessing codes
-- [ ] release some novel designs in training (after technical report)
