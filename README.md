@@ -1,3 +1,37 @@
+# TemporalMuseTalk
+
+This repo is a enhanced version of MuseTalk that enhances the original per-frame architecture with temporal connections. 
+
+It is build upon not-so-nice MuseTalk code so the inference code is in main branch and the training code in in "train_codes" branch. 
+
+## Setup
+
+Follow the steps for setting up the MuseTalk and downloading the models as instructed there. 
+
+## Inference
+
+For temporal inference, use ...
+
+## Finetuning
+
+1. Download the target videos 
+
+cd MuseTalk/data_download
+python download.py
+
+2. For temporal finetuning, use the rewritten data preprocessing code in the train_codes branch as follows:
+
+cd MuseTalk
+''./data_new.sh train output $(ls -d data/video/downloaded_videos/*)''
+
+3. Run training script:
+cd MuseTalk/train_codes
+sh train.sh
+
+
+
+
+
 # MuseTalk
 
 MuseTalk: Real-Time High Quality Lip Synchronization with Latent Space Inpainting
@@ -36,6 +70,7 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 - [04/16/2024] Release Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk) on HuggingFace Spaces (thanks to HF team for their community grant)
 - [04/17/2024] : We release a pipeline that utilizes MuseTalk for real-time inference.
 - [10/18/2024] :mega: We release the [technical report](https://arxiv.org/abs/2410.10122). Our report details a superior model to the open-source L1 loss version. It includes GAN and perceptual losses for improved clarity, and sync loss for enhanced performance.
+- [04/30/2024] We release an initial version of training codes in `train_codes`.
 
 ## Model
 ![Model Structure](assets/figs/musetalk_arc.jpg)
@@ -172,7 +207,7 @@ Note that although we use a very similar architecture as Stable Diffusion, MuseT
 - [x] Huggingface Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk).
 - [x] codes for real-time inference.
 - [ ] technical report.
-- [ ] training codes.
+- [x] training codes.
 - [ ] a better model (may take longer).
 
 

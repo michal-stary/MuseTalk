@@ -1,6 +1,7 @@
-task_0:
-#  video_path: "data/video/VidLab7_Lip-Sync Challenge.mp4"
- video_path: "data/video/emily.mp4"
- audio_path: "data/audio/challenge_en.wav"
+unet_config: models/musetalk/musetalk_mid3D.json
+tasks:
+  task_0:
+    video_path: "data/video/emily.mp4"
+    audio_path: "data/audio/challenge_en.wav"
   
 
