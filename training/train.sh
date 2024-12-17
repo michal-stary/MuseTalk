@@ -27,7 +27,7 @@ accelerate launch --num_processes=1 train_video.py \
 --train_json="../train.json" \
 --val_json="../test.json" \
 --lr_scheduler="cosine" \
---initial_unet_checkpoint="/data/scene-rep/u/michalstary/challenge/MuseTalk/models/musetalk/pytorch_model.bin" \
+--initial_unet_checkpoint="../models/musetalk/pytorch_model.bin" \
 --freeze_spatial_unet \
 --sequence_length=16 \
 # --resume_from_checkpoint="latest" \

@@ -11,4 +11,4 @@ data/video/*.mp4
 data
 temp
 output
-train_codes/images
+training/images

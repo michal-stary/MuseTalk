@@ -38,7 +38,7 @@ def download_video(name, url, output_dir):
 
 def main():
     # Create output directory
-    output_dir = "downloaded_videos"
+    output_dir = "../data/video/downloaded_videos"
     os.makedirs(output_dir, exist_ok=True)
     
     # Read video URLs

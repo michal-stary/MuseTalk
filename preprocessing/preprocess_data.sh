@@ -28,7 +28,7 @@ extract_sections() {
     echo "  audio_path: \"$section_audio\"" >> config.yaml
 
     # Run the Python script with the current config.yaml
-    python -m scripts.data_preproc --inference_config config.yaml --folder_name "$base_name" --use_saved_coord
+    python -m preprocessing.data_preproc --inference_config config.yaml --folder_name "$base_name" --use_saved_coord
     
     index=$((index + 1))
   done

@@ -1,36 +1,45 @@
 # TemporalMuseTalk
 
-This repo is a enhanced version of MuseTalk that enhances the original per-frame architecture with temporal connections. 
-
-It is build upon not-so-nice MuseTalk code so the inference code is in main branch and the training code in in "train_codes" branch. 
+This repository contains an enhanced version of MuseTalk that extends the original per-frame architecture with temporal connections. The codebase has been heavily refactored and debugged from the original MuseTalk implementation to improve code quality to be "still hacky but acceptable"
 
 ## Setup
 
-Follow the steps for setting up the MuseTalk and downloading the models as instructed there. 
+Follow the standard MuseTalk setup instructions below for installing dependencies and downloading the required models.
 
 ## Inference
 
-For temporal inference, use ...
+Run temporal inference using the `inference/inference.py` script:
+
+```bash
+cd REPOSITORY_ROOT
+python -m inference.inference \
+    --inference_config configs/inference/emily_retargeted3D.yaml \
+    --output_vid_name emily_retargeted_challenge_en_3D_10k.mp4 \
+    --unet_checkpoint /data/scene-rep/u/michalstary/challenge/MuseTalk/train_codes/output/3d_general/checkpoint-10000/model.safetensors \
+    --batch_size=16
+```
+
+**Note:** The current implementation works best with `batch_size=16` as it corresponds to the sequence length used during training.
 
 ## Finetuning
 
-1. Download the target videos 
-
-cd MuseTalk/data_download
+1. Download target videos:
+```bash
+cd REPOSITORY_ROOT/preprocessing
 python download.py
+```
 
-2. For temporal finetuning, use the rewritten data preprocessing code in the train_codes branch as follows:
+2. Preprocess the data using the rewritten preprocessing code:
+```bash
+cd REPOSITORY_ROOT
+./preprocessing/preprocess_data.sh train output $(ls -d data/video/downloaded_videos/*)
+```
 
-cd MuseTalk
-''./data_new.sh train output $(ls -d data/video/downloaded_videos/*)''
-
-3. Run training script:
-cd MuseTalk/train_codes
+3. Start training:
+```bash
+cd REPOSITORY_ROOT/training
 sh train.sh
-
-
-
-
+```
 
 # MuseTalk
 
