@@ -15,7 +15,7 @@ cd REPOSITORY_ROOT
 python -m inference.inference \
     --inference_config configs/inference/emily_retargeted3D.yaml \
     --output_vid_name emily_retargeted_challenge_en_3D_10k.mp4 \
-    --unet_checkpoint /data/scene-rep/u/michalstary/challenge/MuseTalk/train_codes/output/3d_general/checkpoint-10000/model.safetensors \
+    --unet_checkpoint training/output/3d_general/checkpoint-10000/model.safetensors \
     --batch_size=16
 ```
 
